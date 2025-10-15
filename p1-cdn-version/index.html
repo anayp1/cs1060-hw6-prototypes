@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prototype 1 - Progress Indicator</title>
+    <!-- 1. This loads Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <!-- 3. This is where our React app will be rendered -->
+    <div id="root"></div>
+
+    <!-- 2. These load React and Babel (to read JSX) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 4. This is our React application code -->
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      const STATUS_STAGES = [
+        { text: 'Uploading...', progress: 25 },
+        { text: 'Analyzing Audio & Video...', progress: 50 },
+        { text: 'Generating Highlight Clips...', progress: 75 },
+        { text: 'Complete!', progress: 100 },
+      ];
+
+      function App() {
+        const [isProcessing, setIsProcessing] = useState(false);
+        const [currentStatusIndex, setCurrentStatusIndex] = useState(0);
+
+        useEffect(() => {
+          let interval;
+          if (isProcessing && currentStatusIndex < STATUS_STAGES.length - 1) {
+            interval = setInterval(() => {
+              setCurrentStatusIndex((prevIndex) => prevIndex + 1);
+            }, 2000);
+          }
+          return () => {
+            if (interval) clearInterval(interval);
+          };
+        }, [isProcessing, currentStatusIndex]);
+
+        const handleUploadClick = () => {
+          setIsProcessing(true);
+          setCurrentStatusIndex(0);
+        };
+
+        const currentStage = STATUS_STAGES[currentStatusIndex];
+        const isComplete = currentStage.text === 'Complete!';
+
+        return (
+          <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center font-sans">
+            {!isProcessing ? (
+              <button
+                onClick={handleUploadClick}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              >
+                Upload Lecture
+              </button>
+            ) : (
+              <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+                <h2 className="text-2xl font-bold mb-2 text-center">Processing Lecture</h2>
+                <p className="text-gray-400 text-center mb-6">{currentStage.text}</p>
+                
+                <div className="w-full bg-gray-700 rounded-full h-4 mb-4">
+                  <div
+                    className={`h-4 rounded-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-blue-600'}`}
+                    style={{ width: `${currentStage.progress}%` }}
+                  ></div>
+                </div>
+                
+                {isComplete && (
+                  <div className="text-center mt-6">
+                    <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg transition-colors">
+                      View Results
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      const container = document.getElementById('root');
+      const root = ReactDOM.createRoot(container);
+      root.render(<App />);
+    </script>
+</body>
+</html>
