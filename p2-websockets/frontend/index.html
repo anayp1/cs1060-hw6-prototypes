@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype 2 - WebSockets</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      // State to hold the latest status received from the backend
+      const [status, setStatus] = useState({ text: 'Connecting to server...', progress: 0 });
+      const [isProcessing, setIsProcessing] = useState(false);
+
+      useEffect(() => {
+        // This effect runs only when isProcessing becomes true
+        if (!isProcessing) return;
+
+        // Connect to the WebSocket server
+        const ws = new WebSocket("ws://localhost:8000/ws");
+
+        ws.onopen = () => {
+          console.log("Connected to WebSocket backend!");
+        };
+
+        // This is the most important part:
+        // an event listener that updates our state when a message is received
+        ws.onmessage = (event) => {
+          const message = JSON.parse(event.data);
+          console.log("Received message:", message);
+          setStatus(message); // Update the UI with the new status
+        };
+
+        ws.onclose = () => {
+          console.log("Disconnected from WebSocket backend.");
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          setStatus({ text: 'Error connecting to server.', progress: 0 });
+        };
+
+        // Cleanup function: close the connection when the component unmounts
+        return () => {
+          ws.close();
+        };
+      }, [isProcessing]); // Dependency array ensures this runs only once when processing starts
+
+      const isComplete = status.text === 'Complete!';
+
+      return (
+        <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center font-sans">
+          {!isProcessing ? (
+            <button
+              onClick={() => setIsProcessing(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+            >
+              Start Real-Time Process
+            </button>
+          ) : (
+            <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+              <h2 className="text-2xl font-bold mb-2 text-center">Processing Lecture</h2>
+              <p className="text-gray-400 text-center mb-6">{status.text}</p>
+              
+              <div className="w-full bg-gray-700 rounded-full h-4 mb-4">
+                <div
+                  className={`h-4 rounded-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-purple-600'}`}
+                  style={{ width: `${status.progress}%` }}
+                ></div>
+              </div>
+              
+              {isComplete && (
+                <div className="text-center mt-6">
+                  <p className="text-green-400">Process finished!</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+  </script>
+</body>
+</html>
