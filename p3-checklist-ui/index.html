@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prototype 3 - Checklist UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const STEPS = [
+            'Upload & Transcribe',
+            'Analyze Content',
+            'Compile Clips'
+        ];
+
+        // A helper component for the icons
+        const StatusIcon = ({ status }) => {
+            if (status === 'completed') {
+                // Green Checkmark
+                return <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>;
+            }
+            if (status === 'in-progress') {
+                // Blue Pulsing Spinner
+                return (
+                    <div className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+                );
+            }
+            // Gray Pending Circle
+            return <div className="w-6 h-6 rounded-full border-2 border-gray-500"></div>;
+        };
+
+        function App() {
+            const [activeStepIndex, setActiveStepIndex] = useState(0);
+
+            useEffect(() => {
+                if (activeStepIndex < STEPS.length) {
+                    const timer = setTimeout(() => {
+                        setActiveStepIndex(prevIndex => prevIndex + 1);
+                    }, 3000); // Move to next step every 3 seconds
+
+                    return () => clearTimeout(timer);
+                }
+            }, [activeStepIndex]);
+
+            const isComplete = activeStepIndex >= STEPS.length;
+
+            return (
+                <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center font-sans">
+                    <div className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md">
+                        <h2 className="text-2xl font-bold mb-6 text-center">
+                            {isComplete ? "Processing Complete!" : "Generating Highlights..."}
+                        </h2>
+                        <div className="space-y-4">
+                            {STEPS.map((step, index) => {
+                                let status = 'pending';
+                                if (index < activeStepIndex) {
+                                    status = 'completed';
+                                } else if (index === activeStepIndex) {
+                                    status = 'in-progress';
+                                }
+
+                                let textClass = 'text-gray-500';
+                                if (status === 'completed') textClass = 'text-gray-300';
+                                if (status === 'in-progress') textClass = 'text-blue-400 font-bold';
+                                
+                                return (
+                                    <div key={step} className="flex items-center space-x-4">
+                                        <StatusIcon status={status} />
+                                        <span className={`text-lg transition-colors duration-300 ${textClass}`}>{step}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
